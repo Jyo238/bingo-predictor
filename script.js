@@ -46,7 +46,7 @@ function recommendMove() {
 
     clearRecommendations(); // 清除先前的推薦步
 
-    const availableNumbers = board.filter(num => 
+    const availableNumbers = board.filter(num =>
         !playerSelections.has(num) && !systemSelections.has(num)
     );
 
@@ -118,7 +118,7 @@ function calculateScore(num) {
             if (line.includes(13)) {
                 score += 5; // 中心點加分
             }
-            if (line.includes(1) && line.includes(25)) {
+            if ((line.includes(1) && line.includes(25)) || (line.includes(5) && line.includes(21))) {
                 score += 10; // 對角線上的格子加分
             }
         }
