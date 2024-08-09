@@ -40,7 +40,7 @@ function selectSquare(num) {
 
 function recommendMove() {
     if (chancesLeft <= 0) {
-        document.getElementById('status').textContent = 'No chances left for recommendations.';
+        document.getElementById('status').textContent = '沒有推薦的格子';
         return;
     }
 
@@ -51,7 +51,7 @@ function recommendMove() {
     );
 
     if (availableNumbers.length === 0) {
-        document.getElementById('status').textContent = 'No moves available for recommendation.';
+        document.getElementById('status').textContent = '沒有推薦的格子';
         return;
     }
 
@@ -70,12 +70,12 @@ function recommendMove() {
     });
 
     if (bestMoves.length > 0) {
-        document.getElementById('status').textContent = `Recommend flipping square(s) ${bestMoves.join(', ')}`;
+        document.getElementById('status').textContent = `推薦的格子為： ${bestMoves.join(', ')}`;
         bestMoves.forEach(num => {
             document.getElementById(`square-${num}`).classList.add('yellow');
         });
     } else {
-        document.getElementById('status').textContent = 'No moves available for recommendation.';
+        document.getElementById('status').textContent = '沒有推薦的格子';
     }
 }
 
@@ -142,10 +142,10 @@ function checkForBingo() {
     const lines = calculateLines(selections);
 
     if (lines >= 4) {
-        document.getElementById('status').textContent = 'You win!';
+        document.getElementById('status').textContent = '連成四條了!';
         disableButtons();
     } else if (chancesLeft === 0) {
-        document.getElementById('status').textContent = `You connected ${lines} lines. Try again!`;
+        document.getElementById('status').textContent = `連了${lines}條`;
         disableButtons();
     }
 }
@@ -178,7 +178,7 @@ function calculateLines(selections) {
 }
 
 function updateChanceCount() {
-    document.getElementById('chance-count').textContent = `Chances Left: ${chancesLeft}`;
+    document.getElementById('chance-count').textContent = `還有${chancesLeft}次機會`;
 }
 
 function resetBoard() {
