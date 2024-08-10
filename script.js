@@ -160,7 +160,7 @@ function selectBestBlock(bestMoves) {
         }
         else if(hasSelected(17) && bestMoves.includes(21))
         {
-            return [9]
+            return [21]
         }
         else
         {
@@ -175,7 +175,7 @@ function selectBestBlock(bestMoves) {
         }
         else if(hasSelected(19) && bestMoves.includes(25))
         {
-            return [7]
+            return [25]
         }
         else
             return bestMoves
