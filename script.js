@@ -40,6 +40,134 @@ function selectSquare(num) {
     }
 }
 
+function simulatePotential(num) {
+    let tempPlayerSelections = new Set([...playerSelections, ...systemSelections]);
+
+    // 假設玩家選擇了num
+    tempPlayerSelections.add(num);
+
+    // 模擬系統選擇剩餘的格子
+    const availableNumbers = board.filter(n =>
+        !tempPlayerSelections.has(n)
+    );
+    //console.log('num+availableNumbers',num,availableNumbers)
+    let totalScore = 0;
+    availableNumbers.forEach(systemNum => {
+        let tempSelections = new Set(tempPlayerSelections);
+        //console.log('systemNum',systemNum)
+        tempSelections.add(systemNum);
+        //console.log('tempSelections',tempSelections)
+        totalScore += calculateFutureLines(tempSelections);
+    });
+    //console.log('totalScore',totalScore)
+    return totalScore;
+}
+
+function calculateFutureLines(selections) {
+    const winningLines = [
+        [1, 2, 3, 4, 5],
+        [6, 7, 8, 9, 10],
+        [11, 12, 13, 14, 15],
+        [16, 17, 18, 19, 20],
+        [21, 22, 23, 24, 25],
+        [1, 6, 11, 16, 21],
+        [2, 7, 12, 17, 22],
+        [3, 8, 13, 18, 23],
+        [4, 9, 14, 19, 24],
+        [5, 10, 15, 20, 25],
+        [1, 7, 13, 19, 25],
+        [5, 9, 13, 17, 21]
+    ];
+
+    let potentialLines = 0;
+
+    winningLines.forEach(line => {
+        const p = line.filter(index => selections.has(index))
+        //console.log('p',p)
+        const playerCount = p.length;
+        const emptyCount = line.length - playerCount;
+        //console.log('playerCount',playerCount)
+        if (playerCount > 0 && emptyCount > 0) {
+            potentialLines+=playerCount;
+        }
+    });
+
+    //console.log('potentialLines',potentialLines)
+    return potentialLines;
+}
+
+
+function calculateScoreForSim(selections) {
+    //console.log('selections',selections)
+    const winningLines = [
+        [1, 2, 3, 4, 5],
+        [6, 7, 8, 9, 10],
+        [11, 12, 13, 14, 15],
+        [16, 17, 18, 19, 20],
+        [21, 22, 23, 24, 25],
+        [1, 6, 11, 16, 21],
+        [2, 7, 12, 17, 22],
+        [3, 8, 13, 18, 23],
+        [4, 9, 14, 19, 24],
+        [5, 10, 15, 20, 25],
+        [1, 7, 13, 19, 25],
+        [5, 9, 13, 17, 21]
+    ];
+
+    let score = 0;
+
+    winningLines.forEach(line => {
+        //console.log('line',line)
+        const playerCount = line.filter(index => selections.has(index)).length;
+        //console.log('playerCount',playerCount)
+        if (playerCount === 5) {
+            score += 100; // 已經完成的線給予最高分
+        } else if (playerCount === 4) {
+            score += 50; // 如果這條線只剩一個空位，給予較高分
+        } else if (playerCount === 3) {
+            score += 20; // 當這條線剩兩個空位時，給予中等分數
+        } else {
+            score += playerCount; // 其他情況下的得分
+        }
+
+         // 進一步強化對中心點和斜線的加分
+         if (line.includes(13)) {
+            score += 5;
+        }
+        if ((line.includes(7) && line.includes(19)) || (line.includes(5) && line.includes(17))) {
+            score += 10; 
+        }
+        if ((line.includes(1) && line.includes(25)) || (line.includes(5) && line.includes(21))) {
+            score += 10; 
+        }
+
+        //console.log('score',score)
+    });
+
+    return score;
+}
+
+
+function compareFuturePotential(bestMoves) {
+    if (bestMoves.length <= 1) {
+        return bestMoves;
+    }
+
+    let potentialScores = bestMoves.map(num => {
+        return { num: num, score: simulatePotential(num) };
+    });
+
+    //console.log('potentialScores',potentialScores)
+
+    potentialScores.sort((a, b) => b.score - a.score);
+
+    const highestScore = potentialScores[0].score;
+    const bestMovesFiltered = potentialScores.filter(p => p.score === highestScore).map(p => p.num);
+
+    return bestMovesFiltered;
+}
+
+
 function recommendMove() {
     if (chancesLeft <= 0) {
         document.getElementById('status').textContent = '沒有推薦的格子';
@@ -71,18 +199,8 @@ function recommendMove() {
         }
     });
 
-
-    bestMoves=removeBlock(bestMoves,11,12,14)
-    bestMoves=removeBlock(bestMoves,3,8,18)
-    bestMoves=removeBlock(bestMoves,12,14,15)
-    bestMoves=removeBlock(bestMoves,8,18,23)
-
-    if(bestMoves.includes(1) || bestMoves.includes(7) || bestMoves.includes(5) || bestMoves.includes(9) || bestMoves.includes(17) || bestMoves.includes(21) || bestMoves.includes(19) || bestMoves.includes(25))
-    {
-        bestMoves = selectBestBlock(bestMoves)
-    }
-
-
+    // 比較多個候選格子的未來潛力
+    bestMoves = compareFuturePotential(bestMoves);
 
     if (bestMoves.length > 0) {
         document.getElementById('status').textContent = `推薦的格子為： ${bestMoves.join(', ')}`;
@@ -92,140 +210,6 @@ function recommendMove() {
     } else {
         document.getElementById('status').textContent = '沒有推薦的格子';
     }
-}
-
-function countSelections(group) {
-    let count = 0;
-    group.forEach(num => {
-        if (hasSelected(num)) {
-            count++;
-        }
-    });
-    
-    return count;
-}
-
-function hasSelected(num) {
-    return playerSelections.has(num) || systemSelections.has(num);
-}
-
-function selectBestBlock(bestMoves) {
-    console.log('bestMoves',bestMoves)
-    if(currentChoice < 0)
-        return bestMoves;
-
-    const groupA = [1, 2, 6, 7];
-    const groupB = [4, 5, 9, 10];
-    const groupC = [16, 17, 21, 22];
-    const groupD = [19, 20, 24, 25];
-    const lineA = [3,8];
-    const lineB = [11,12];
-    const lineC = [14,15];
-    const lineD = [18,23];
-    if(groupA.includes(currentChoice))
-    {
-        if(bestMoves.includes(7) && !hasSelected(7))
-        {
-            return [7]
-        }
-        else if(hasSelected(7) && bestMoves.includes(19))
-        {
-            return [19]
-        }
-        else
-        {
-            return bestMoves
-        }
-    }
-    else if(groupB.includes(currentChoice))
-    {
-        if(bestMoves.includes(9) && !hasSelected(9))
-        {
-            return [9]
-        }
-        else if(hasSelected(9) && bestMoves.includes(17))
-        {
-            return [17]
-        }
-        else
-        {
-            return bestMoves
-        }
-    }
-    else if(groupC.includes(currentChoice))
-    {
-        if(bestMoves.includes(17) && !hasSelected(17))
-        {
-            return [17]
-        }
-        else if(hasSelected(17) && bestMoves.includes(21))
-        {
-            return [21]
-        }
-        else
-        {
-            return bestMoves
-        }
-    }
-    else if(groupD.includes(currentChoice))
-    {
-        if(bestMoves.includes(19) && !hasSelected(19))
-        {
-            return [19]
-        }
-        else if(hasSelected(19) && bestMoves.includes(25))
-        {
-            return [25]
-        }
-        else
-            return bestMoves
-    }
-    else if(lineA.includes(currentChoice))
-    {
-        if(bestMoves.includes(7) && !hasSelected(7))
-            return [7]
-        else
-            return bestMoves 
-    }
-    else if(lineB.includes(currentChoice))
-    {
-        if(bestMoves.includes(12) && !hasSelected(12))
-            return [12]
-        else
-            return bestMoves 
-    }
-    else if(lineC.includes(currentChoice))
-    {
-        if(bestMoves.includes(14) && !hasSelected(14))
-            return [14]
-        else
-            return bestMoves 
-    }
-    else if(lineD.includes(currentChoice))
-    {
-        if(bestMoves.includes(18) && !hasSelected(18))
-            return [18]
-        else
-            return bestMoves 
-    }
-    else
-    {
-        return bestMoves
-    }
-
-    
-}
-
-
-
-
-function removeBlock(bestMoves, a, b, c) {
-    if (bestMoves.includes(a) && bestMoves.includes(b)) {
-        bestMoves = bestMoves.filter(item => item !== b);
-    } else if (bestMoves.includes(a) && bestMoves.includes(c)) {
-        bestMoves = bestMoves.filter(item => item !== c);
-    }
-    return bestMoves;
 }
 
 
