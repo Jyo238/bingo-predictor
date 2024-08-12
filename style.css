@@ -17,6 +17,7 @@ body {
     grid-template-rows: repeat(5, 50px);
     gap: 5px;
     margin: 20px auto;
+    justify-content: center;
 }
 
 .bingo-board div {
@@ -57,4 +58,15 @@ button {
 #status, #chance-count {
     margin-top: 20px;
     font-size: 18px;
+}
+
+.probability-display {
+    margin-top: 20px;
+    font-size: 18px;
+    color: #FF5722; 
+    font-weight: bold;
+    height: 24px; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }

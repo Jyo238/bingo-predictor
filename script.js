@@ -40,6 +40,57 @@ function selectSquare(num) {
     }
 }
 
+function calculateFinalMoveProbability(playSelection) {
+    let tempSelections = new Set([...playerSelections, ...systemSelections, playSelection]);
+    const remainingNumbers = board.filter(n => !tempSelections.has(n));
+    let successfulOutcomes = 0;
+
+    const winningLines = [
+        [1, 2, 3, 4, 5],
+        [6, 7, 8, 9, 10],
+        [11, 12, 13, 14, 15],
+        [16, 17, 18, 19, 20],
+        [21, 22, 23, 24, 25],
+        [1, 6, 11, 16, 21],
+        [2, 7, 12, 17, 22],
+        [3, 8, 13, 18, 23],
+        [4, 9, 14, 19, 24],
+        [5, 10, 15, 20, 25],
+        [1, 7, 13, 19, 25],
+        [5, 9, 13, 17, 21]
+    ];
+
+    // 系統隨機選擇每一個可能的剩餘格子
+    remainingNumbers.forEach(systemSelection => {
+        let tempSet = new Set(tempSelections);
+        tempSet.add(systemSelection);
+
+        // 檢查在這種情況下是否能連成四條
+        let lines = 0;
+        winningLines.forEach(line => {
+            if (line.every(num => tempSet.has(num))) {
+                lines++;
+            }
+        });
+
+        if (lines >= 4) {
+            successfulOutcomes++;
+        }
+    });
+
+    // 計算機率
+    const probability = (successfulOutcomes / remainingNumbers.length) * 100;
+    return probability.toFixed(0); // 四捨五入到小數點後兩位
+}
+
+
+function updateProbabilityDisplay(bestMoves) {
+   // 假設玩家選擇了其中一個最佳格子，計算連成四條的機率
+   const probability = calculateFinalMoveProbability(bestMoves[0]);
+   document.getElementById('final-probability').textContent = `選擇推薦的格子後連成四條的機率為 ${probability}%`;
+}
+
+
 function simulatePotential(num) {
     let tempPlayerSelections = new Set([...playerSelections, ...systemSelections]);
 
@@ -207,6 +258,10 @@ function recommendMove() {
         bestMoves.forEach(num => {
             document.getElementById(`square-${num}`).classList.add('yellow');
         });
+
+        if (chancesLeft === 1) {
+            updateProbabilityDisplay(bestMoves);
+        }
     } else {
         document.getElementById('status').textContent = '沒有推薦的格子';
     }
@@ -291,6 +346,7 @@ function checkForBingo() {
         disableButtons();
     } else if (chancesLeft === 0) {
         document.getElementById('status').textContent = `連了${lines}條`;
+        document.getElementById('final-probability').textContent = '';
         disableButtons();
     }
 }
@@ -331,6 +387,7 @@ function resetBoard() {
     systemSelections = new Set();
     createBoard();
     document.getElementById('status').textContent = '';
+    document.getElementById('final-probability').textContent = '';
     chancesLeft = 8;
     turn = 1;
     updateChanceCount();
