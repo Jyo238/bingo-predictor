@@ -5,7 +5,20 @@ let systemSelections = new Set();
 let currentChoice = -1;
 let chancesLeft = 8;
 let turn = 1; // 奇數為玩家回合，偶數為系統回合
-
+const winningLines = [
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+    [1, 6, 11, 16, 21],
+    [2, 7, 12, 17, 22],
+    [3, 8, 13, 18, 23],
+    [4, 9, 14, 19, 24],
+    [5, 10, 15, 20, 25],
+    [1, 7, 13, 19, 25],
+    [5, 9, 13, 17, 21]
+];
 function createBoard() {
     const bingoBoard = document.getElementById('bingo-board');
     bingoBoard.innerHTML = '';
@@ -44,21 +57,6 @@ function calculateFinalMoveProbability(playSelection) {
     let tempSelections = new Set([...playerSelections, ...systemSelections, playSelection]);
     const remainingNumbers = board.filter(n => !tempSelections.has(n));
     let successfulOutcomes = 0;
-
-    const winningLines = [
-        [1, 2, 3, 4, 5],
-        [6, 7, 8, 9, 10],
-        [11, 12, 13, 14, 15],
-        [16, 17, 18, 19, 20],
-        [21, 22, 23, 24, 25],
-        [1, 6, 11, 16, 21],
-        [2, 7, 12, 17, 22],
-        [3, 8, 13, 18, 23],
-        [4, 9, 14, 19, 24],
-        [5, 10, 15, 20, 25],
-        [1, 7, 13, 19, 25],
-        [5, 9, 13, 17, 21]
-    ];
 
     // 系統隨機選擇每一個可能的剩餘格子
     remainingNumbers.forEach(systemSelection => {
@@ -115,21 +113,6 @@ function simulatePotential(num) {
 }
 
 function calculateFutureLines(selections) {
-    const winningLines = [
-        [1, 2, 3, 4, 5],
-        [6, 7, 8, 9, 10],
-        [11, 12, 13, 14, 15],
-        [16, 17, 18, 19, 20],
-        [21, 22, 23, 24, 25],
-        [1, 6, 11, 16, 21],
-        [2, 7, 12, 17, 22],
-        [3, 8, 13, 18, 23],
-        [4, 9, 14, 19, 24],
-        [5, 10, 15, 20, 25],
-        [1, 7, 13, 19, 25],
-        [5, 9, 13, 17, 21]
-    ];
-
     let potentialLines = 0;
 
     winningLines.forEach(line => {
@@ -150,20 +133,7 @@ function calculateFutureLines(selections) {
 
 function calculateScoreForSim(selections) {
     //console.log('selections',selections)
-    const winningLines = [
-        [1, 2, 3, 4, 5],
-        [6, 7, 8, 9, 10],
-        [11, 12, 13, 14, 15],
-        [16, 17, 18, 19, 20],
-        [21, 22, 23, 24, 25],
-        [1, 6, 11, 16, 21],
-        [2, 7, 12, 17, 22],
-        [3, 8, 13, 18, 23],
-        [4, 9, 14, 19, 24],
-        [5, 10, 15, 20, 25],
-        [1, 7, 13, 19, 25],
-        [5, 9, 13, 17, 21]
-    ];
+
 
     let score = 0;
 
@@ -254,36 +224,54 @@ function recommendMove() {
     bestMoves = compareFuturePotential(bestMoves);
 
     if (bestMoves.length > 0) {
+        if (chancesLeft === 1) {
+            bestMoves = findBestMoveWhenLastChance(bestMoves);
+            updateProbabilityDisplay(bestMoves);
+        }
+
         document.getElementById('status').textContent = `推薦的格子為： ${bestMoves.join(', ')}`;
         bestMoves.forEach(num => {
             document.getElementById(`square-${num}`).classList.add('yellow');
         });
-
-        if (chancesLeft === 1) {
-            updateProbabilityDisplay(bestMoves);
-        }
     } else {
         document.getElementById('status').textContent = '沒有推薦的格子';
     }
 }
 
 
-function calculateScore(num) {
-    const winningLines = [
-        [1, 2, 3, 4, 5],
-        [6, 7, 8, 9, 10],
-        [11, 12, 13, 14, 15],
-        [16, 17, 18, 19, 20],
-        [21, 22, 23, 24, 25],
-        [1, 6, 11, 16, 21],
-        [2, 7, 12, 17, 22],
-        [3, 8, 13, 18, 23],
-        [4, 9, 14, 19, 24],
-        [5, 10, 15, 20, 25],
-        [1, 7, 13, 19, 25],
-        [5, 9, 13, 17, 21]
-    ];
+function findBestMoveWhenLastChance(bestMoves) {
+    let bestMovesWithMaxLines = [];
+    let maxProbability = 1;
 
+    // 遍歷玩家可以選擇的每一個格子
+    for (let playerMove = 1; playerMove <= 25; playerMove++) {
+        if (playerSelections.has(playerMove) || systemSelections.has(playerMove)) {
+            continue; // 跳過已經選擇過的格子
+        }
+        let probability = Number(calculateFinalMoveProbability(playerMove));
+        // console.log('playerMove', playerMove);
+        // console.log('probability', probability);
+        // console.log('probability > maxProbability', probability > maxProbability);
+        // console.log('maxProbability before comparison', maxProbability);
+
+        if (probability > maxProbability) {
+            maxProbability = probability;
+            bestMovesWithMaxLines = [playerMove];
+        } else if (probability === maxProbability) {
+            bestMovesWithMaxLines.push(playerMove);
+        }
+
+        //console.log('maxProbability after comparison', maxProbability);
+    }
+
+    //console.log('bestMovesWithMaxLines', bestMovesWithMaxLines);
+
+    // 去重並返回最佳選擇
+    return bestMovesWithMaxLines.length > 0 ? [...new Set(bestMovesWithMaxLines)] : bestMoves;
+}
+
+
+function calculateScore(num) {
     let score = 0;
     let potentialLines = 0;
 
@@ -342,7 +330,7 @@ function checkForBingo() {
     const lines = calculateLines(selections);
 
     if (lines >= 4) {
-        document.getElementById('status').textContent = `連成${lines}條了!`;
+        document.getElementById('status').textContent =  `連成${lines}條了!`;
         disableButtons();
     } else if (chancesLeft === 0) {
         document.getElementById('status').textContent = `連了${lines}條`;
@@ -352,21 +340,6 @@ function checkForBingo() {
 }
 
 function calculateLines(selections) {
-    const winningLines = [
-        [1, 2, 3, 4, 5],
-        [6, 7, 8, 9, 10],
-        [11, 12, 13, 14, 15],
-        [16, 17, 18, 19, 20],
-        [21, 22, 23, 24, 25],
-        [1, 6, 11, 16, 21],
-        [2, 7, 12, 17, 22],
-        [3, 8, 13, 18, 23],
-        [4, 9, 14, 19, 24],
-        [5, 10, 15, 20, 25],
-        [1, 7, 13, 19, 25],
-        [5, 9, 13, 17, 21]
-    ];
-
     let lines = 0;
 
     for (const line of winningLines) {
