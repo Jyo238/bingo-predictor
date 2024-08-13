@@ -340,7 +340,7 @@ function checkForBingo() {
     const lines = calculateLines(selections);
 
     if (lines >= 4) {
-        document.getElementById('status').textContent = '連成四條了!';
+        document.getElementById('status').textContent = `連成${lines}條了!`;
         disableButtons();
     } else if (chancesLeft === 0) {
         document.getElementById('status').textContent = `連了${lines}條`;
